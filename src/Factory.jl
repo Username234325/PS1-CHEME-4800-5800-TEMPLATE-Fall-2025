@@ -42,7 +42,13 @@ function build(modeltype::Type{MyOneDimensionalElementaryWolframRuleModel},
     # TODO: build the rule dictionary from the index, colors, and radius values in the data NamedTuple
     # TODO: Check out the `digits` function in Julia to help with this task
     # TODO: Make sure to comment out the throw statement below once you implement this functionality
-    throw(ErrorException("The rule dictionary construction from the index, colors, and radius values has not been implemented yet."));
+    number_of_states = colors^radius;
+    states = digits(index, base=colors, pad=number_of_states);  
+    for 
+        i ∈ 0:number_of_states-1
+        rule[i] = states[i+1];
+    end
+
     
     # set the data on the object
     model.index = index;
