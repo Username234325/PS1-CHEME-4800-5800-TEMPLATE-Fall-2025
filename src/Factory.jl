@@ -1,20 +1,4 @@
-"""
-    function build(modeltype::Type{MyOneDimensionalElementaryWolframRuleModel}, data::NamedTuple) -> MyOneDimensionalElementarWolframRuleModel
 
-This `build` method constructs an instance of the [`MyOneDimensionalElementaryWolframRuleModel`](@ref) type using the data in a [NamedTuple](https://docs.julialang.org/en/v1/base/base/#Core.NamedTuple).
-
-### Arguments
-- `modeltype::Type{MyOneDimensionalElementaryWolframRuleModel}`: The type of model to build, in this case, the [`MyOneDimensionalElementaryWolframRuleModel`](@ref) type.
-- `data::NamedTuple`: The data to use to build the model.
-
-The `data::NamedTuple` must contain the following `keys`:
-- `index::Int64`: The index of the Wolfram rule
-- `colors::Int64`: The number of colors in the rule
-- `radius::Int64`: The radius, i.e., the number of cells to consider in the rule
-
-### Return
-This function returns a populated instance of the [`MyOneDimensionalElementaryWolframRuleModel`](@ref) type.
-"""
 function build(modeltype::Type{MyOneDimensionalElementaryWolframRuleModel}, 
     data::NamedTuple)::MyOneDimensionalElementaryWolframRuleModel
 
