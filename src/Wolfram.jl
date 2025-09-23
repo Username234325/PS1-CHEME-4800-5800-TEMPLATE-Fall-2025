@@ -1,4 +1,3 @@
-# -- PRIVATE API BELOW HERE ------------------------------------------------------------------------ #
 function _simulate(algorithm::WolframDeterministicSimulation, rulemodel::MyOneDimensionalElementaryWolframRuleModel, initial::Array{Int64,1}; 
     steps::Int64 = 240, maxnumberofmoves::Union{Int64, Nothing} = nothing, 
     parameters::Union{Nothing, Dict{Int, Float64}} = nothing,
@@ -17,12 +16,49 @@ function _simulate(algorithm::WolframDeterministicSimulation, rulemodel::MyOneDi
     foreach(i -> frame[1,i] = initial[i], 1:width);    
     frames[1] = frame; # set the initial frame -
     
-    # TODO: implement the simulation run loop for the deterministic simulation here
-    # TODO: Make sure to comment out the throw statement below once you implement this functionality
-   
-    throw(ErrorException("The simulation run loop for the deterministic simulation has not been implemented yet."));
-    
+    # main loop -
+    for time ∈ 2:steps
 
+        # create the next frame -
+        frame = copy(frames[time-1]);
+        tmp = Array{Int64,1}(undef, radius) |> a -> fill!(a, 0);
+        for i ∈ 1:width
+
+            index = nothing;
+            if (i == 1)
+                
+                tmp[1] = frame[time-1, width];      # left
+                tmp[2] = frame[time-1, i];          # center
+                tmp[3] = frame[time-1, i + 1];      # right
+
+                # compute the index (this is binary, so we need to compute from left to right)
+                index = parse(Int, join(tmp), base = number_of_colors);
+            elseif (i == width)
+                    
+                tmp[1] = frame[time-1, i - 1];      # left
+                tmp[2] = frame[time-1, i];          # center
+                tmp[3] = frame[time-1, 1];          # right
+    
+                # compute the index (this is binary, so we need to compute from left to right)
+                index = parse(Int, join(tmp), base = number_of_colors);
+            else
+                
+                tmp[1] = frame[time-1, i - 1];      # left
+                tmp[2] = frame[time-1, i];          # center
+                tmp[3] = frame[time-1, i + 1];      # right
+
+                # compute the index (this is binary, so we need to compute from left to right)
+                index = parse(Int, join(tmp), base = number_of_colors);
+            end
+             
+            # what is the next state value?
+            frame[time,i] = rulemodel.rule[index];
+        end
+
+        # set the frame -
+        frames[time] = frame;
+    end
+    
     # return
     return frames;
 end
@@ -50,9 +86,73 @@ function _simulate(algorithm::WolframStochasticSimulation, rulemodel::MyOneDimen
     foreach(i -> frame[1,i] = initial[i], 1:width);    
     frames[1] = frame; # set the initial frame
 
-    # TODO: implement the simulation run loop for the stochastic simulation here
-    # TODO: Make sure to comment out the throw statement below once you implement this functionality
-    throw(ErrorException("The simulation run loop for the stochastic simulation has not been implemented yet."));
+    # main loop -
+    for time ∈ 2:steps
+
+        # create the next frame -
+        frame = copy(frames[time-1]);
+        tmp = Array{Int64,1}(undef, radius) |> a -> fill!(a, 0);
+
+        # generate movement queue -
+        for i ∈ 1:width
+            pᵢ = parameters === nothing ? 1.0 : parameters[i]; # probability of movement of cell i
+            if (cooldown[i] == 0 && rand() < pᵢ && i ∉ collect(q)) # if the cell is not cooling down
+                enqueue!(q, i); # add to queue
+            end
+        end
+      
+        # main loop -
+        movecount = 0;
+        while (isempty(q) == false && (maxnumberofmoves === nothing || movecount ≤ maxnumberofmoves))
+            i = dequeue!(q); # we pull a cell from the top of the queue to make a move -
+
+            # ok, index i is going to make a move -
+            if (cooldownlength > 0)
+                cooldown[i] = cooldownlength; # cell i has to cool down for cooldownlength steps
+            end
+
+            index = nothing;
+            if (i == 1)
+                
+                tmp[1] = frame[time-1, width];      # left
+                tmp[2] = frame[time-1, i];          # center
+                tmp[3] = frame[time-1, i + 1];      # right
+
+                # compute the index (this is binary, so we need to compute from left to right)
+                index = parse(Int, join(tmp), base = number_of_colors);
+            elseif (i == width)
+                    
+                tmp[1] = frame[time-1, i - 1];      # left
+                tmp[2] = frame[time-1, i];          # center
+                tmp[3] = frame[time-1, 1];          # right
+    
+                # compute the index (this is binary, so we need to compute from left to right)
+                index = parse(Int, join(tmp), base = number_of_colors);
+            else
+                
+                tmp[1] = frame[time-1, i - 1];      # left
+                tmp[2] = frame[time-1, i];          # center
+                tmp[3] = frame[time-1, i + 1];      # right
+
+                # compute the index (this is binary, so we need to compute from left to right)
+                index = parse(Int, join(tmp), base = number_of_colors);
+            end
+             
+            # what is the next state value?
+            frame[time,i] = rulemodel.rule[index];
+
+            # update move count -
+            movecount += 1;
+        end
+
+        empty!(q); # clear the queue
+
+        # tick cooldown
+        foreach(i -> cooldown[i] = max(0, cooldown[i] - 1), 1:width);
+
+        # set the frame -
+        frames[time] = frame;
+    end
     
     # return
     return frames;
@@ -86,4 +186,6 @@ function simulate(rulemodel::MyOneDimensionalElementaryWolframRuleModel, initial
     return _simulate(algorithm, rulemodel, initial; steps=steps, 
         maxnumberofmoves=maxnumberofmoves, cooldownlength=cooldownlength, parameters=parameters);
 end
-# -- PUBLIC API ABOVE HERE ------------------------------------------------------------------------ #
+# I'm trying to understand still why any of the steps mean. 
+# In a way this helps the programming for on-going processes, but I don't see how it helps with the Wolfram rules.
+# Anyway, I'll first finish the assignment, then scatter it into segments, and feed it to CHATGPT to see if it can help me understand.
